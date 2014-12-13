@@ -18,8 +18,9 @@ public:
 		z = 0;
 	}
 
-	inline bool zero() {
-		return !z;
+	inline bool defined() {
+		wrap();
+		return z;
 	}
 
 	inline void wrap() {
@@ -34,21 +35,21 @@ public:
 		hint res;
 		for (int i = 0; i < b.z; ++i) {
 			res.d[i] = a.d[i] + b.d[i] + t;
-			if (res.d[i] > MDN) {
+			if (res.d[i] < MDN)
+				t = 0;
+			else {
 				res.d[i] -= MDN;
 				t = 1;
 			}
-			else
-				t = 0;
 		}
 		for (int i = b.z; i < a.z; ++i) {
 			res.d[i] = a.d[i] + t;
-			if (res.d[i] > MDN) {
+			if (res.d[i] < MDN)
+				t = 0;
+			else {
 				res.d[i] -= MDN;
 				t = 1;
 			}
-			else
-				t = 0;
 		}
 		res.z = a.z;
 		if (t)
@@ -57,6 +58,7 @@ public:
 		return res;
 	}
 	void print() {
+		wrap();
 		if (!z)
 			return (void) putchar('0');
 		printf("%d", d[z - 1]);
@@ -74,7 +76,10 @@ const int hint::MDN = 100000000;
 bool operator <(const hint &a, const hint &b) {
 	if (a.z != b.z)
 		return a.z < b.z;
-	return memcmp(a.d, b.d, a.z * sizeof(int)) < 0;
+	for (register int i = a.z - 1; i > -1; --i)
+		if (a.d[i] != b.d[i])
+			return a.d[i] < b.d[i];
+	return false;
 }
 
 hint operator +(const hint &a, const hint &b) {
@@ -97,7 +102,7 @@ hint X, F[80][80];
 hint dfs(const int l, const int r) {
 	if (l == r)
 		return hint(D[l]);
-	if (!F[l][r].zero())
+	if (F[l][r].defined())
 		return F[l][r];
 	F[l][r] = dfs(l + 1, r) + dfs(l + 1, r) + hint(D[l]);
 	return update(F[l][r], dfs(l, r - 1) + dfs(l, r - 1) + hint(D[r]));
